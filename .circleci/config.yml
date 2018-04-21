@@ -40,6 +40,7 @@ build_linux: &build_linux
     paths:
       - dist
 
+# osx configuration template
 build_osx: &build_osx
   <<: *defaults
   macos:
