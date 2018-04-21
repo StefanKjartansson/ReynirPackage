@@ -118,11 +118,11 @@ jobs:
       - image: python:3.6.4-jessie
     steps:
       - attach_workspace:
-          <<: *attach
+        <<: *attach
       - run:
-      name: List wheels
-          command: |
-        ls dist/*.whl
+        name: List wheels
+        command: |
+          ls dist/*.whl
 
 workflows:
   version: 2
