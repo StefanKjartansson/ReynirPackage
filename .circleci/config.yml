@@ -1,116 +1,117 @@
+version: 2
+
 defaults: &defaults
   working_directory: ~/ReynirPackage
 
-# attach is here in case anyone else needs to attach as well.
+  # attach is here in case anyone else needs to attach as well.
 attach: &attach
   at: ~/ReynirPackage
 
 build_linux: &build_linux
   <<: *defaults
   docker:
-	- image: quay.io/pypa/manylinux1_x86_64
+  - image: quay.io/pypa/manylinux1_x86_64
   steps:
-	- checkout
-	- run:
- 		name: Build wheel
-		command: |
-	    /opt/python/$PYBIN-$PYBINm/bin/pip wheel /io/ -w wheelhouse/
-		for whl in wheelhouse/*.whl
-		do
-    		auditwheel repair "$whl" -w /io/wheelhouse/
-		done
-		chmod 666 /io/wheelhouse/*
-	- run:
- 		name: Test wheel
-		command: |
-	    /opt/python/$PYBIN-$PYBINm/bin/python -m venv /tmp/venv
-		source /tmp/venv/bin/activate
-		pip install pytest
-		pip install reynir --no-index -f /io/wheelhouse
-		py.test reynir
-	- run:
- 		name: Copy wheels
-		command: |
-		mkdir -p dist
-		cp -r /io/wheelhouse/*.whl dist/
-	- persist_to_workspace:
-		root: .
-		paths:
-		- dist
+  - checkout
+  - run:
+    name: Build wheel
+    command: |
+      /opt/python/$PYBIN-$PYBINm/bin/pip wheel /io/ -w wheelhouse/
+      for whl in wheelhouse/*.whl
+      do
+        auditwheel repair "$whl" -w /io/wheelhouse/
+      done
+      chmod 666 /io/wheelhouse/*
+  - run:
+    name: Test wheel
+    command: |
+      /opt/python/$PYBIN-$PYBINm/bin/python -m venv /tmp/venv
+      source /tmp/venv/bin/activate
+      pip install pytest
+      pip install reynir --no-index -f /io/wheelhouse
+      py.test reynir
+  - run:
+    name: Copy wheels
+    command: |
+      mkdir -p dist
+      cp -r /io/wheelhouse/*.whl dist/
+  - persist_to_workspace:
+    root: .
+    paths:
+      - dist
 
 build_osx: &build_osx
   <<: *defaults
   macos:
     xcode: 9
   steps:
-	- checkout
-    - run:
-	    name: Setup Python
-	    command: |
-	    curl -L -o /tmp/get-pip.py https://bootstrap.pypa.io/get-pip.py
-	    curl -L -o /tmp/Python.pkg $PYTHON_URL
-	    sudo installer -pkg /tmp/Python.pkg -target /
-        export PATH=/Library/Frameworks/Python.framework/Versions/$PYTHON_VERSION/bin:$PATH
-	    which python3
-	    python3 --version
-	    python3 /tmp/get-pip.py --no-setuptools --no-wheel
-	    pip --version
-        pip install wheel
-	    pip install delocate
-	- run:
- 	    name: Build wheel
-	    command: |
-        mkdir -p dist
-  	    pip wheel ~/ReynirPackage -w /tmp/wheelhouse --no-deps
-  	    for whl in /tmp/wheelhouse/*.whl
-	    do
-          delocate-listdeps "$whl"
-		  # rebuild with shared libraries.
-	      delocate-wheel -w ~/ReynirPackage/dist "$whl"
-	    done
-	- run:
- 		name: Test wheel
-		command: |
-        export PATH=/Library/Frameworks/Python.framework/Versions/$PYTHON_VERSION/bin:$PATH
-	    python3 -m venv /tmp/venv
-		source /tmp/venv/bin/activate
-		pip install pytest
-		pip install reynir --no-index -f ~/ReynirPackage/dist
-		py.test reynir
-	- persist_to_workspace:
-		root: .
-		paths:
-		- dist
+  - checkout
+  - run:
+    name: Setup Python
+    command: |
+      curl -L -o /tmp/get-pip.py https://bootstrap.pypa.io/get-pip.py
+      curl -L -o /tmp/Python.pkg $PYTHON_URL
+      sudo installer -pkg /tmp/Python.pkg -target /
+      export PATH=/Library/Frameworks/Python.framework/Versions/$PYTHON_VERSION/bin:$PATH
+      which python3
+      python3 --version
+      python3 /tmp/get-pip.py --no-setuptools --no-wheel
+      pip --version
+      pip install wheel
+      pip install delocate
+  - run:
+    name: Build wheel
+    command: |
+      mkdir -p dist
+      pip wheel ~/ReynirPackage -w /tmp/wheelhouse --no-deps
+      for whl in /tmp/wheelhouse/*.whl
+      do
+        delocate-listdeps "$whl"
+        # rebuild with shared libraries.
+        delocate-wheel -w ~/ReynirPackage/dist "$whl"
+      done
+  - run:
+    name: Test wheel
+    command: |
+      export PATH=/Library/Frameworks/Python.framework/Versions/$PYTHON_VERSION/bin:$PATH
+      python3 -m venv /tmp/venv
+      source /tmp/venv/bin/activate
+      pip install pytest
+      pip install reynir --no-index -f ~/ReynirPackage/dist
+      py.test reynir
+  - persist_to_workspace:
+    root: .
+    paths:
+      - dist
 
-version: 2
 jobs:
   build_osx_34:
-	<<: *build_osx
-	environment:
-   	  PYTHON_VERSION: 3.4
-   	  PYTHON_URL: https://www.python.org/ftp/python/3.4.8/python-3.4.8-macosx10.6.pkg
+  <<: *build_osx
+  environment:
+      PYTHON_VERSION: 3.4
+      PYTHON_URL: https://www.python.org/ftp/python/3.4.8/python-3.4.8-macosx10.6.pkg
   build_osx_35:
-	<<: *build_osx
-	environment:
-   	  PYTHON_VERSION: 3.5
-   	  PYTHON_URL: https://www.python.org/ftp/python/3.5.5/python-3.5.5-macosx10.6.pkg
+  <<: *build_osx
+  environment:
+      PYTHON_VERSION: 3.5
+      PYTHON_URL: https://www.python.org/ftp/python/3.5.5/python-3.5.5-macosx10.6.pkg
   build_osx_36:
-	<<: *build_osx
-	environment:
-   	  PYTHON_VERSION: 3.6
-   	  PYTHON_URL: https://www.python.org/ftp/python/3.6.5/python-3.6.5-macosx10.6.pkg
+  <<: *build_osx
+  environment:
+      PYTHON_VERSION: 3.6
+      PYTHON_URL: https://www.python.org/ftp/python/3.6.5/python-3.6.5-macosx10.6.pkg
   build_34:
-	<<: *build_linux
-	environment:
-	  PYBIN: "cp34"
+  <<: *build_linux
+  environment:
+    PYBIN: "cp34"
   build_35:
-	<<: *build_linux
-	environment:
-	  PYBIN: "cp35"
+  <<: *build_linux
+  environment:
+    PYBIN: "cp35"
   build_36:
-	<<: *build_linux
-	environment:
-	  PYBIN: "cp36"
+  <<: *build_linux
+  environment:
+    PYBIN: "cp36"
   release:
     <<: *defaults
     docker:
@@ -119,25 +120,25 @@ jobs:
       - attach_workspace:
           <<: *attach
       - run:
-		  name: List wheels
+      name: List wheels
           command: |
-		    ls dist/*.whl
+        ls dist/*.whl
 
 workflows:
   version: 2
   build-and-package:
     jobs:
-	  - build_osx_34
-	  - build_osx_35
-	  - build_osx_36
-	  - build_34
-	  - build_35
-	  - build_36
+    - build_osx_34
+    - build_osx_35
+    - build_osx_36
+    - build_34
+    - build_35
+    - build_36
       - release:
           requires:
-			- build_osx_34
-			- build_osx_35
-			- build_osx_36
-			- build_34
-			- build_35
-			- build_36
+      - build_osx_34
+      - build_osx_35
+      - build_osx_36
+      - build_34
+      - build_35
+      - build_36
