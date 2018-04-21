@@ -126,7 +126,7 @@ jobs:
 
 workflows:
   version: 2
-  build-and-package:
+  build:
     jobs:
     - build_osx_34
     - build_osx_35
@@ -134,11 +134,11 @@ workflows:
     - build_34
     - build_35
     - build_36
-      - release:
-          requires:
-      - build_osx_34
-      - build_osx_35
-      - build_osx_36
-      - build_34
-      - build_35
-      - build_36
+    - release:
+      requires:
+        - build_osx_34
+        - build_osx_35
+        - build_osx_36
+        - build_34
+        - build_35
+        - build_36
